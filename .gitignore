@@ -1,0 +1,43 @@
+# Ignore node_modules directory
+node_modules/
+
+# Ignore log files
+*.log
+
+# Ignore environment variable files
+.env
+
+# Ignore build directories
+dist/
+build/
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore IDE-specific files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+
+# Ignore npm package-lock file
+package-lock.json
+
+# Ignore Python cache files
+__pycache__/
+tools/__pycache__/
+
+# Ignore Python virtual environment
+venv/
+
+# Ignore database files
+shopping_assistant.db
+setup_db.py
+
+# Ignore test files
+test_data.py
+test_cart_tool.py
+test.ipynb
