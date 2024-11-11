@@ -77,12 +77,76 @@ def update_cart(customer_id: int, product_id: int, quantity: int):
     conn.close()
     return f"Updated quantity of product {product_id} to {quantity}."
 
-@tool
-def update_cart_tool(customer_id: int, product_id: int, quantity: int):
-    """
-    Tool to update the quantity of a product in the shopping cart.
-    """
-    return update_cart(customer_id, product_id, quantity)
+def remove_from_cart(customer_id: int, product_id: int, quantity: int = None):
+    conn = sqlite3.connect('shopping_assistant.db')
+    cursor = conn.cursor()
+
+    # Check if the item is in the cart.
+    cursor.execute("SELECT * FROM cart_items WHERE customer_id = ? AND product_id = ?", (customer_id, product_id))
+    result = cursor.fetchone()
+    if not result:
+        conn.close()
+        return "Item not found in cart."
+    
+    # If quantity is not specified, remove all of the item.
+    if quantity is None:
+        cursor.execute("DELETE FROM cart_items WHERE customer_id = ? AND product_id = ?", (customer_id, product_id))
+        conn.commit()
+        conn.close()
+        return f"Removed all of product {product_id} from cart."
+    else:
+        current_quantity = result[3]
+        # If the quantity to remove is greater than the current quantity, remove all of the item.
+        if quantity >= current_quantity:
+            cursor.execute("DELETE FROM cart_items WHERE customer_id = ? AND product_id = ?", (customer_id, product_id))
+            conn.commit()
+            conn.close()
+            return f"The quantity to remove is greater than the current quantity. All of product {product_id} removed."
+
+        else:
+            cursor.execute("UPDATE cart_items SET quantity = quantity - ? WHERE customer_id = ? AND product_id = ?",
+                           (quantity, customer_id, product_id))
+            conn.commit()
+            conn.close()
+            return f"Removed {quantity} of product {product_id} from cart."
+            
+def search_items_in_cart(customer_id: int, name: str = None, category: str = None, type: str = None):
+    '''
+    Search for items in the cart of the current customer by name, category, and type.
+    Args:
+        customer_id (int): The id of the customer.
+        name (str): The name of the product.
+        category (str): The category of the product.
+        type (str): The type of the product.
+    Returns:
+        list: A list of dictionaries containing the product name, price, and quantity.'''
+    conn = sqlite3.connect('shopping_assistant.db')
+    cursor = conn.cursor()
+
+    sql_query = "SELECT p.id p.name, p.price, ci.quantity FROM cart_items ci JOIN products p ON ci.product_id = p.id WHERE ci.customer_id = ?"
+    parameters = [customer_id]
+
+    if name is not None:
+        sql_query += " AND category LIKE ?"
+        parameters.append(category)
+    if category is not None:
+        sql_query += " AND category LIKE ?"
+        parameters.append(category)
+    if type is not None:
+        sql_query += " AND type LIKE ?"
+        parameters.append(type)
+    
+    cursor.execute(sql_query, parameters)
+    results = cursor.fetchall()
+    conn.close()
+    return results
+
+# @tool
+# def update_cart_tool(customer_id: int, product_id: int, quantity: int):
+#     """
+#     Tool to update the quantity of a product in the shopping cart.
+#     """
+#     return update_cart(customer_id, product_id, quantity)
 
 @tool
 def add_to_cart_tool(customer_id: int, product_id: int, quantity: int):
@@ -113,5 +177,17 @@ def clear_cart_tool(customer_id: int):
     """
     return clear_cart(customer_id)
 
+@tool
+def remove_from_cart_tool(customer_id: int, product_id: int, quantity: int = None):
+    """
+    Tool to remove an item from the shopping cart.
+    Args:
+        customer_id (int): The ID of the customer.
+        product_id (int): The ID of the product.
+        quantity (int): The quantity of the product to remove. If not specified, remove all of the item
+    Returns:
+        str: A message indicating the success of the operation.
+    """
+    return remove_from_cart(customer_id, product_id, quantity)
 
 
