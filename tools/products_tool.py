@@ -2,7 +2,7 @@
 from langchain.agents import tool
 import sqlite3
 
-def search_products(query: str = None, category: str = None, type: str = None, min_price: float = None, max_price: float = None, is_category: bool = False):
+def search_products(name: str = None, category: str = None, type: str = None, description: str = None, min_price: float = None, max_price: float = None, is_category: bool = False, is_type: bool = False):
     conn = sqlite3.connect('shopping_assistant.db')
     cursor = conn.cursor()
 
@@ -11,16 +11,17 @@ def search_products(query: str = None, category: str = None, type: str = None, m
     parameters = []
 
     # Decide whether the query is a category or name
-    if is_category:
-        sql_query += " AND category LIKE ?"
-        parameters.append(f"%{query}%")
-    else:
+    if not (is_category or is_type):
         # If it's not a category, search in the name and description
-        if query:
-            sql_query += " AND name LIKE ?"
-            parameters.append(f"%{query}%")
-            sql_query += " OR description LIKE ?"
-            parameters.append(f"%{query}%")
+        if description:
+            # Separate the query by spaces and search for each word in the name and description
+            description = description.split()
+            for word in description:
+                sql_query += " OR description LIKE ?"
+                parameters.append(f"%{word}%")
+    if name:
+        sql_query += " AND name LIKE ?"
+        parameters.append(f"%{name}%")
     
     # Add price filters if they are set
     if min_price is not None:
@@ -60,7 +61,7 @@ def get_product_by_product_id(product_id: int):
         return None
 
 @tool
-def search_product_tool(query: str = None, category: str = None, type: str = None, min_price: float = None, max_price: float = None, is_category: bool = False):
+def search_product_tool(name: str = None, category: str = None, type: str = None, description: str = None, min_price: float = None, max_price: float = None, is_category: bool = False):
     """ 
     Tool to search all the information for products in the database. 
     Args: 
@@ -74,7 +75,7 @@ def search_product_tool(query: str = None, category: str = None, type: str = Non
         list: A list of dictionaries containing the product information.
         If no products are found, return None.
     """
-    return search_products(query, category, type, min_price, max_price, is_category)
+    return search_products(name, category, type, description, min_price, max_price, is_category)
 
 @tool
 def get_product_by_product_id_tool(product_id: int):
@@ -82,19 +83,20 @@ def get_product_by_product_id_tool(product_id: int):
     return get_product_by_product_id(product_id)
 
 @tool
-def search_products_recommendations_tool(query: str = None, category: str = None, type: str = None, min_price: float = None, max_price: float = None, is_category: bool = False):
+
+def search_products_recommendations_tool(name: str = None, category: str = None, type: str = None, description: str = None, min_price: float = None, max_price: float = None, is_category: bool = False):
     """ 
-    Tool to search for product recommendations based on the query.
+    Tool to search for product recommendations based on the provided criteria.
     Args:
-        query (str): The search query.
-        category (str): The category of the product.
-        type (str): The type of the product.
-        min_price (float): The minimum price of the product.
-        max_price (float): The maximum price of the product.
-        is_category (bool): Whether the query is a category or not.
-    Returns:
-        list: A list of dictionaries containing the product information.
-        If no products are found, return None.
+        name (str, optional): The name of the product.
+        category (str, optional): The category of the product.
+        type (str, optional): The type of the product.
+        description (str, optional): The description of the product.
+        min_price (float, optional): The minimum price of the product.
+        max_price (float, optional): The maximum price of the product.
+        is_category (bool, optional): Whether the query is a category or not.
+
+    If no products are found, returns an empty list.
     """
-    return search_products(query, category, type, min_price, max_price, is_category)
+    return search_products(name, category, type, description, min_price, max_price, is_category)
 

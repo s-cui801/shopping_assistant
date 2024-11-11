@@ -19,8 +19,8 @@ from utilities import handle_tool_error, create_tool_node_with_fallback, _print_
 
 from langchain_openai import ChatOpenAI
 
-from tools.products_tool import search_product_tool
-from tools.cart_tool import fetch_cart_tool, add_to_cart_tool
+from tools.products_tool import search_product_tool, search_products_recommendations_tool, get_product_by_product_id_tool
+from tools.cart_tool import fetch_cart_tool, add_to_cart_tool, clear_cart_tool, remove_from_cart_tool
 from tools.order_tool import create_order_tool
 from tools.policy_tool import check_discount_tool
 
@@ -64,8 +64,8 @@ primary_assistant_prompt = ChatPromptTemplate.from_messages(
             " When searching, be persistent. Expand your query bounds if the first search returns no results. "
             " If a search comes up empty, expand your search before giving up."
             " When searching, you are strictly limited to the database provided. "
-            " When adding items to the cart, ensure that the item is in stock and that the quantity is available. "
-            " When adding items to the cart, ask user to confirm the quantity and the product before adding it to the cart. If the item is already in the cart, ask the user to confirm the operation; if the user confirms, update the quantity of the item in the cart. "
+            " When providing product categories, strictly use one of the following categories: 'Laptop', 'Smartphone', 'Headphones', 'Accessories', 'Wearables'. For example, if the user asks for 'Laptops', please respond with 'Laptop'."
+            " When providing product types, strictly use one of the following types: 'Budget Laptop', 'Premium Laptop', 'Convertible Laptop', 'Flagship Smartphone', 'Mid-range Smartphone', 'Noise-cancelling Headphones', 'Portable Charger', 'Wireless Mouse', 'Fitness Tracker'. For example, if the user asks for 'Budget Smartphones', please respond with 'Budget Smartphone'."
             "\n\nCurrent user:\n<User>\n{user_info}\n</User>"
             "\nCurrent time: {time}.",
         ),
@@ -76,8 +76,12 @@ primary_assistant_prompt = ChatPromptTemplate.from_messages(
 part_1_tools = [
     TavilySearchResults(max_results=2),
     search_product_tool,
+    search_products_recommendations_tool,
+    get_product_by_product_id_tool,
     fetch_cart_tool,
     add_to_cart_tool,
+    clear_cart_tool,
+    remove_from_cart_tool,
     create_order_tool,
     check_discount_tool,
     
@@ -128,8 +132,13 @@ tutorial_questions = [
     "I'm looking for Fitbit Charge 5. Are there any available?",
     "I want to find a laptop. My budget is $1300. Can you help me find one?",
     "Ok, I think I'll go with the Macbook Air. Can you add it to my cart?",
+    "Yes, I'd like to add 2 of the Macbook Air to my cart.",
     "What items are in my shopping carts now?",
-    "I'm ready to check out. Can you create an order for me?",
+    "Awesome. Can you remove one Dell XPS 13 from my cart?",
+    "Yes, I want to remove one Dell XPS 13 from my cart.",
+    "Now what's in my cart?",
+    "Can you recommend a good headphone with noise-cancelling feature?",
+    # "I'm ready to check out. Can you create an order for me?",
 
 
     # "What is the result of the 2024 U.S. presidential election?",
@@ -156,7 +165,7 @@ config = {
     "configurable": {
         # The passenger_id is used in our flight tools to
         # fetch the user's flight information
-        "customer_id": "101",
+        "customer_id": "1",
         # Checkpoints are accessed by thread_id
         "thread_id": thread_id,
     }
