@@ -6,6 +6,7 @@ import uuid
 from typing_extensions import TypedDict
 
 from langgraph.graph.message import AnyMessage, add_messages
+from langchain_core.messages import ToolMessage
 
 # from langchain_anthropic import ChatAnthropic
 from langchain_community.tools.tavily_search import TavilySearchResults
@@ -73,57 +74,77 @@ primary_assistant_prompt = ChatPromptTemplate.from_messages(
     ]
 ).partial(time=datetime.now)
 
-part_1_tools = [
+safe_tools = [
     TavilySearchResults(max_results=2),
     search_product_tool,
     search_products_recommendations_tool,
     get_product_by_product_id_tool,
     fetch_cart_tool,
+    
+    check_discount_tool,
+]
+
+sensitive_tools = [
     add_to_cart_tool,
     clear_cart_tool,
     remove_from_cart_tool,
     create_order_tool,
-    check_discount_tool,
-    
-    # fetch_user_flight_information,
-    # search_flights,
-    # lookup_policy,
-    # update_ticket_to_new_flight,
-    # cancel_ticket,
-    # search_car_rentals,
-    # book_car_rental,
-    # update_car_rental,
-    # cancel_car_rental,
-    # search_hotels,
-    # book_hotel,
-    # update_hotel,
-    # cancel_hotel,
-    # search_trip_recommendations,
-    # book_excursion,
-    # update_excursion,
-    # cancel_excursion,
 ]
-part_1_assistant_runnable = primary_assistant_prompt | llm.bind_tools(part_1_tools)
+sensitive_tool_names = {t.name for t in sensitive_tools}
+
+
+assistant_runnable = primary_assistant_prompt | llm.bind_tools(safe_tools + sensitive_tools)
 
 # Create the graph
 builder = StateGraph(State)
 
 
 # Define nodes: these do the work
-builder.add_node("assistant", Assistant(part_1_assistant_runnable))
-builder.add_node("tools", create_tool_node_with_fallback(part_1_tools))
+builder.add_node("assistant", Assistant(assistant_runnable))
+builder.add_node("safe_tools", create_tool_node_with_fallback(safe_tools))
+builder.add_node("sensitive_tools", create_tool_node_with_fallback(sensitive_tools))
 # Define edges: these determine how the control flow moves
 builder.add_edge(START, "assistant")
+# builder.add_conditional_edges(
+#     "assistant",
+#     tools_condition,
+# )
+# builder.add_edge("tools", "assistant")
+
+# Create our own rule of routing instead of using the default `tools_condition`
+def route_tools(state: State):
+    next_node = tools_condition(state)
+    # If no tools are invoked, return to the user
+    if next_node == END:
+        return END
+    
+    ai_message = state["messages"][-1]
+    
+    # Assume parallel tool calls by iterating through all tool calls in ai_message
+    sensitive_tool_used = any(
+        tool_call["name"] in sensitive_tool_names for tool_call in ai_message.tool_calls
+    )
+    
+    # If any sensitive tool was called, route to "sensitive_tools"
+    if sensitive_tool_used:
+        return "sensitive_tools"
+    
+    # Otherwise, route to "safe_tools"
+    return "safe_tools"
+
+# Add the conditional edges
 builder.add_conditional_edges(
-    "assistant",
-    tools_condition,
+    "assistant", route_tools, ["safe_tools", "sensitive_tools", END]
 )
-builder.add_edge("tools", "assistant")
+builder.add_edge("safe_tools", "assistant")
+builder.add_edge("sensitive_tools", "assistant")
 
 # The checkpointer lets the graph persist its state
 # this is a complete memory for the entire graph.
 memory = MemorySaver()
-part_1_graph = builder.compile(checkpointer=memory)
+shopping_assistant_graph = builder.compile(
+    checkpointer=memory,
+    interrupt_before=["sensitive_tools"])
 
 # Let's create an example conversation a user might have with the assistant
 tutorial_questions = [
@@ -174,8 +195,41 @@ config = {
 
 _printed = set()
 for question in tutorial_questions:
-    events = part_1_graph.stream(
+    events = shopping_assistant_graph.stream(
         {"messages": ("user", question)}, config, stream_mode="values"
     )
     for event in events:
         _print_event(event, _printed)
+    snapshot = shopping_assistant_graph.get_state(config)
+    while snapshot.next:
+        # We have an interrupt! The agent is trying to use a tool, and the user can approve or deny it
+        # Note: This code is all outside of your graph. Typically, you would stream the output to a UI.
+        # Then, you would have the frontend trigger a new run via an API call when the user has provided input.
+        try:
+            user_input = input(
+                "Do you approve of the above actions? Type 'y' to continue;"
+                " otherwise, explain your requested changed.\n\n"
+            )
+        except:
+            user_input = "y"
+        if user_input.strip() == "y":
+            # Just continue
+            result = shopping_assistant_graph.invoke(
+                None,
+                config,
+            )
+        else:
+            # Satisfy the tool invocation by
+            # providing instructions on the requested changes / change of mind
+            result = shopping_assistant_graph.invoke(
+                {
+                    "messages": [
+                        ToolMessage(
+                            tool_call_id=event["messages"][-1].tool_calls[0]["id"],
+                            content=f"API call denied by user. Reasoning: '{user_input}'. Continue assisting, accounting for the user's input.",
+                        )
+                    ]
+                },
+                config,
+            )
+        snapshot = shopping_assistant_graph.get_state(config)
