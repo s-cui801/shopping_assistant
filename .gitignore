@@ -41,3 +41,12 @@ setup_db.py
 test_data.py
 test_cart_tool.py
 test.ipynb
+
+# Django/Migrations
+**/migrations/
+
+# Database
+*.sqlite3
+
+# Static files
+/static/

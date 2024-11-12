@@ -127,8 +127,8 @@ def search_items_in_cart(customer_id: int, name: str = None, category: str = Non
     parameters = [customer_id]
 
     if name is not None:
-        sql_query += " AND category LIKE ?"
-        parameters.append(category)
+        sql_query += " AND name LIKE ?"
+        parameters.append(name)
     if category is not None:
         sql_query += " AND category LIKE ?"
         parameters.append(category)
