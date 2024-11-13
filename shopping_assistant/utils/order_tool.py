@@ -1,18 +1,15 @@
 from langchain.agents import tool
 import sqlite3
 from datetime import datetime
+from shopping_assistant.models import Order
 
 def create_order(cart_id: int, total_amount: float):
-    conn = sqlite3.connect('shopping_assistant.db')
-    cursor = conn.cursor()
-
-    # Add the cart to oders
-    cursor.execute("INSERT INTO orders (cart_id, order_status, payment_status, order_date) VALUES (?, ?, ?, ?)", 
-                   (cart_id, "Pending", "Unpaid", datetime.now()))
-    
-    conn.commit()
-    conn.close()
-
+    order = Order.objects.create(
+        cart_id=cart_id,
+        order_status="Pending",
+        payment_status="Unpaid",
+        order_date=datetime.now()
+    )
     return "Order created successfully."
 
 @tool

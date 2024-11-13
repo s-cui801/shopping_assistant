@@ -1,63 +1,66 @@
 # tools/products_tool.py
 from langchain.agents import tool
 import sqlite3
+from shopping_assistant.models import Product
+from django.db.models import Q
 
-def search_products(name: str = None, category: str = None, type: str = None, description: str = None, min_price: float = None, max_price: float = None, is_category: bool = False, is_type: bool = False):
-    conn = sqlite3.connect('shopping_assistant.db')
-    cursor = conn.cursor()
-
-    # Start the base query
-    sql_query = "SELECT * FROM products WHERE 1=1"
-    parameters = []
+def search_products(name: str = None, category: str = None, type: str = None, description: str = None, 
+                   min_price: float = None, max_price: float = None, is_category: bool = False, is_type: bool = False):
+    # Start with all products
+    queryset = Product.objects.all()
 
     # Decide whether the query is a category or name
     if not (is_category or is_type):
-        # If it's not a category, search in the name and description
         if description:
-            # Separate the query by spaces and search for each word in the name and description
-            description = description.split()
-            for word in description:
-                sql_query += " OR description LIKE ?"
-                parameters.append(f"%{word}%")
+            # Split description into words and create Q objects for OR conditions
+            description_words = description.split()
+            description_query = Q()
+            for word in description_words:
+                description_query |= Q(description__icontains=word)
+            queryset = queryset.filter(description_query)
+
     if name:
-        sql_query += " AND name LIKE ?"
-        parameters.append(f"%{name}%")
+        queryset = queryset.filter(name__icontains=name)
     
-    # Add price filters if they are set
     if min_price is not None:
-        sql_query += " AND price >= ?"
-        parameters.append(min_price)
+        queryset = queryset.filter(price__gte=min_price)
 
     if max_price is not None:
-        sql_query += " AND price <= ?"
-        parameters.append(max_price)
+        queryset = queryset.filter(price__lte=max_price)
     
     if type:
-        sql_query += " AND type LIKE ?"
-        parameters.append(f"%{type}%")
+        queryset = queryset.filter(type__icontains=type)
     
     if category:
-        sql_query += " AND category LIKE ?"
-        parameters.append(f"%{category}%")
+        queryset = queryset.filter(category__icontains=category)
 
-    cursor.execute(sql_query, parameters)
-    results = cursor.fetchall()
-    conn.close()
-
-    # Return the results as a list of dictionaries
-    return [{"product_id": row[0], "name": row[1], "price": row[2], "stock": row[3], "category": row[4], "type": row[5], "description": row[6]} for row in results]
+    # Convert queryset to list of dictionaries
+    return [
+        {
+            "product_id": product.id,
+            "name": product.name,
+            "price": product.price,
+            "stock": product.stock,
+            "category": product.category,
+            "type": product.type,
+            "description": product.description
+        }
+        for product in queryset
+    ]
 
 def get_product_by_product_id(product_id: int):
-    conn = sqlite3.connect('shopping_assistant.db')
-    cursor = conn.cursor()
-
-    cursor.execute("SELECT * FROM products WHERE product_id = ?", (product_id,))
-    result = cursor.fetchone()
-    conn.close()
-
-    if result:
-        return {"product_id": result[0], "name": result[1], "price": result[2], "stock": result[3], "category": result[4], "type": result[5], "description": result[6]}
-    else:
+    try:
+        product = Product.objects.get(id=product_id)
+        return {
+            "product_id": product.id,
+            "name": product.name,
+            "price": product.price,
+            "stock": product.stock,
+            "category": product.category,
+            "type": product.type,
+            "description": product.description
+        }
+    except Product.DoesNotExist:
         return None
 
 @tool
@@ -83,7 +86,6 @@ def get_product_by_product_id_tool(product_id: int):
     return get_product_by_product_id(product_id)
 
 @tool
-
 def search_products_recommendations_tool(name: str = None, category: str = None, type: str = None, description: str = None, min_price: float = None, max_price: float = None, is_category: bool = False):
     """ 
     Tool to search for product recommendations based on the provided criteria.
