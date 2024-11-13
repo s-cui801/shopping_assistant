@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Assistant</title>
+</head>
+<body>
+    <h2>Welcome to the Shopping Assistant!</h2>
+    
+    <p>{{ assistant_response }}</p>
+    
+    <form method="POST">
+        {% csrf_token %}
+        <label for="user_query">Ask something:</label>
+        <input type="text" id="user_query" name="user_query" required><br><br>
+        
+        <button type="submit">Submit</button>
+    </form>
+    
+    <form action="{% url 'logout' %}" method="POST">
+        {% csrf_token %}
+        <button type="submit">Logout</button>
+    </form>
+</body>
+</html>
