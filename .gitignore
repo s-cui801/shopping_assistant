@@ -47,6 +47,7 @@ test.ipynb
 
 # Database
 *.sqlite3
+/db/
 
 # Static files
 /static/

@@ -10,7 +10,7 @@ from django.db import models
 
 
 class Products(models.Model):
-    id = models.AutoField(primary_key=True, blank=True)
+    product_id = models.AutoField(primary_key=True, blank=True)
     name = models.TextField()
     price = models.FloatField()
     stock = models.IntegerField()
@@ -46,7 +46,7 @@ class CartItems(models.Model):
         'Products',
         on_delete=models.CASCADE,
         db_column='product_id',
-        to_field='id'  # References the id field in Products table
+        to_field='product_id'  # References the id field in Products table
     )
     quantity = models.IntegerField()
 
@@ -56,7 +56,7 @@ class CartItems(models.Model):
 
 
 class Orders(models.Model):
-    order_id = models.AutoField(primary_key=True, blank=True, null=True)
+    order_id = models.AutoField(primary_key=True, blank=True)
     customer = models.ForeignKey(
         'Customers', 
         on_delete=models.CASCADE,
@@ -85,7 +85,7 @@ class OrderItems(models.Model):
         on_delete=models.CASCADE,
         db_column='product_id', 
         to_field='product_id'
-    )
+        )
     quantity = models.IntegerField()
 
     class Meta:
