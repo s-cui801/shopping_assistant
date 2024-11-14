@@ -4,23 +4,72 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shopping Assistant</title>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
 <body>
-    <h2>Welcome to the Shopping Assistant!</h2>
-    
-    <p>{{ assistant_response }}</p>
-    
-    <form method="POST">
-        {% csrf_token %}
-        <label for="user_query">Ask something:</label>
-        <input type="text" id="user_query" name="user_query" required><br><br>
+    <div>
+        <h1>Welcome to the Shopping Assistant!</h1>
+        {% if customer_id %}
+            <p>Your customer ID is: {{ customer_id }}</p>
+        {% else %}
+            <p>No customer ID provided.</p>
+        {% endif %}
         
-        <button type="submit">Submit</button>
-    </form>
-    
-    <form action="{% url 'logout' %}" method="POST">
-        {% csrf_token %}
-        <button type="submit">Logout</button>
-    </form>
+        <!-- Conversation History -->
+        <div id="chat">
+            {% for message in conversation %}
+                <div class="{{ message.role }}">
+                    <strong>{{ message.role }}:</strong> {{ message.content }}
+                </div>
+            {% endfor %}
+        </div>
+
+        <!-- User Input -->
+        <form id="chat-form">
+            <input type="text" id="user-message" placeholder="Type your message here" required>
+            <button type="submit">Send</button>
+        </form>
+        
+        <!-- Logout Button -->
+        <form action="{% url 'logout' %}" method="POST">
+            {% csrf_token %}
+            <button type="submit">Logout</button>
+        </form>
+    </div>
+
+    <script>
+        $(document).ready(function(){
+            $('#chat-form').submit(function(event) {
+                event.preventDefault();
+                var userMessage = $('#user-message').val();
+                
+                if (userMessage) {
+                    // Send the user message to the backend via AJAX
+                    $.ajax({
+                        type: 'POST',
+                        url: '{% url "assistant" %}',  // Ensure this URL is correct
+                        data: {
+                            'user_message': userMessage,
+                            'csrfmiddlewaretoken': '{{ csrf_token }}',  // CSRF token for security
+                        },
+                        success: function(response) {
+                            // Clear the input field
+                            $('#user-message').val('');
+                            
+                            // Append the new conversation
+                            var newMessages = '';
+                            response.messages.forEach(function(msg) {
+                                newMessages += '<div class="' + msg.role + '"><strong>' + msg.role.charAt(0).toUpperCase() + msg.role.slice(1) + ':</strong> ' + msg.content + '</div>';
+                            });
+                            $('#chat').html(newMessages);
+                        },
+                        error: function(error) {
+                            console.error('Error:', error);
+                        }
+                    });
+                }
+            });
+        });
+    </script>
 </body>
 </html>
