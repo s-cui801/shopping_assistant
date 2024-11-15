@@ -4,6 +4,7 @@ from langchain_community.tools import TavilySearchResults
 from ..utils.products_tool import search_product_tool, search_products_recommendations_tool, get_product_by_product_id_tool
 from ..utils.cart_tool import fetch_cart_tool, add_to_cart_tool, clear_cart_tool, remove_from_cart_tool
 from ..utils.order_tool import create_order_tool
+from ..utils.customer_tool import fetch_customer_information_tool
 
 from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, StateGraph, START
@@ -21,6 +22,7 @@ safe_tools = [
     search_products_recommendations_tool,
     get_product_by_product_id_tool,
     fetch_cart_tool,
+    fetch_customer_information_tool,
     # check_discount_tool,
 ]
 
@@ -38,12 +40,17 @@ assistant_runnable = primary_assistant_prompt | llm.bind_tools(safe_tools + sens
 # Create the graph
 builder = StateGraph(State)
 
+# def customer_info(state: State):
+#     return {"customer_info": fetch_customer_information_tool.invoke({})}
 
 # Define nodes: these do the work
+# builder.add_node("fetch_customer_info", customer_info)
 builder.add_node("assistant", Assistant(assistant_runnable))
 builder.add_node("safe_tools", create_tool_node_with_fallback(safe_tools))
 builder.add_node("sensitive_tools", create_tool_node_with_fallback(sensitive_tools))
 # Define edges: these determine how the control flow moves
+# builder.add_edge(START, "fetch_customer_info")
+# builder.add_edge("fetch_customer_info", "assistant")
 builder.add_edge(START, "assistant")
 # builder.add_conditional_edges(
 #     "assistant",

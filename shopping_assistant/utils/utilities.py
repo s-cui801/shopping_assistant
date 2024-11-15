@@ -1,4 +1,4 @@
-from langchain_core.messages import ToolMessage
+from langchain_core.messages import ToolMessage, AIMessage
 from langchain_core.runnables import RunnableLambda
 
 from langgraph.prebuilt import ToolNode
@@ -65,4 +65,34 @@ def _store_event(event: dict, stored_messages: list, _printed: set, max_length=1
                 msg_repr = msg_repr[:max_length] + " ... (truncated)"
             stored_messages.append(msg_repr)
             _printed.add(message.id)
+
+def _store_ai_messages(event: dict, stored_messages: list, _printed: set, max_length=1500):
+    """
+    Store only AI messages in a list.
+    
+    Args:
+        event (dict): Event containing messages
+        stored_messages (list): List to store AI messages
+        _printed (set): Set to track processed message IDs
+        max_length (int): Maximum length for message content
+        
+    Returns:
+        list: Updated stored_messages list
+    """
+    message = event.get("messages")
+    if message:
+        if isinstance(message, list):
+            message = message[-1]
+            
+        # Only process AI messages
+        if isinstance(message, AIMessage):
+            if message.id not in _printed:
+                # msg_repr = message.pretty_repr(html=True)
+                msg_repr = message.content
+                if len(msg_repr) > max_length:
+                    msg_repr = msg_repr[:max_length] + " ... (truncated)"
+                stored_messages.append(msg_repr)
+                _printed.add(message.id)
+    
+    return stored_messages
     

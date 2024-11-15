@@ -16,7 +16,7 @@ import uuid
 # from langgraph.checkpoint.memory import MemorySaver
 # from langgraph.graph import END, StateGraph, START
 # from langgraph.prebuilt import tools_condition
-from ..utils.utilities import _store_event
+from ..utils.utilities import _store_event, _store_ai_messages
 
 # from langchain_openai import ChatOpenAI
 
@@ -192,7 +192,8 @@ def stream_user_queries(shopping_assistant_graph, config, question):
     {"messages": ("user", question)}, config, stream_mode="values"
     )
     for event in events:
-        _store_event(event, message_list, _printed)
+        # _store_event(event, message_list, _printed)
+        _store_ai_messages(event, message_list, _printed)
     return message_list
     # snapshot = shopping_assistant_graph.get_state(config)
     # while snapshot.next:
