@@ -38,3 +38,31 @@ def _print_event(event: dict, _printed: set, max_length=1500):
                 msg_repr = msg_repr[:max_length] + " ... (truncated)"
             print(msg_repr)
             _printed.add(message.id)
+
+def _store_event(event: dict, stored_messages: list, _printed: set, max_length=1500):
+    """
+    Store event messages in a list instead of printing them.
+    
+    Args:
+        event (dict): Event containing messages and dialog state
+        stored_messages (list): List to store messages
+        max_length (int): Maximum length for message content
+        
+    Returns:
+        list: Updated stored_messages list
+    """
+    current_state = event.get("dialog_state")
+    if current_state:
+        stored_messages.append(f"Currently in: {current_state[-1]}")
+    
+    message = event.get("messages")
+    if message:
+        if isinstance(message, list):
+            message = message[-1]
+        if message.id not in _printed:
+            msg_repr = message.pretty_repr(html=True)
+            if len(msg_repr) > max_length:
+                msg_repr = msg_repr[:max_length] + " ... (truncated)"
+            stored_messages.append(msg_repr)
+            _printed.add(message.id)
+    

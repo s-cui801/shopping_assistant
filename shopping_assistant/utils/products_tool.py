@@ -1,13 +1,13 @@
 # tools/products_tool.py
 from langchain.agents import tool
 import sqlite3
-from shopping_assistant.models import Product
+from ..models import Products
 from django.db.models import Q
 
 def search_products(name: str = None, category: str = None, type: str = None, description: str = None, 
                    min_price: float = None, max_price: float = None, is_category: bool = False, is_type: bool = False):
     # Start with all products
-    queryset = Product.objects.all()
+    queryset = Products.objects.all()
 
     # Decide whether the query is a category or name
     if not (is_category or is_type):
@@ -37,7 +37,7 @@ def search_products(name: str = None, category: str = None, type: str = None, de
     # Convert queryset to list of dictionaries
     return [
         {
-            "product_id": product.id,
+            "product_id": product.product_id,
             "name": product.name,
             "price": product.price,
             "stock": product.stock,
@@ -50,9 +50,9 @@ def search_products(name: str = None, category: str = None, type: str = None, de
 
 def get_product_by_product_id(product_id: int):
     try:
-        product = Product.objects.get(id=product_id)
+        product = Products.objects.get(product_id=product_id)
         return {
-            "product_id": product.id,
+            "product_id": product.product_id,
             "name": product.name,
             "price": product.price,
             "stock": product.stock,
@@ -60,7 +60,7 @@ def get_product_by_product_id(product_id: int):
             "type": product.type,
             "description": product.description
         }
-    except Product.DoesNotExist:
+    except Products.DoesNotExist:
         return None
 
 @tool

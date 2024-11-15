@@ -2,13 +2,13 @@
 
 from langchain.agents import tool
 import sqlite3
-from shopping_assistant.models import CartItem, Product
+from shopping_assistant.models import CartItems, Products
 
 def add_to_cart(customer_id: int, product_id: int, quantity: int):
     '''
     Insert a new item into the cart_items table using Django ORM.
     '''
-    CartItem.objects.create(
+    CartItems.objects.create(
         customer_id=customer_id,
         product_id=product_id,
         quantity=quantity
@@ -16,11 +16,11 @@ def add_to_cart(customer_id: int, product_id: int, quantity: int):
     return f"Added {quantity} of product {product_id} to cart."
 
 def fetch_cart(customer_id: int):
-    cart_items = CartItem.objects.filter(customer_id=customer_id).select_related('product')
+    cart_items = CartItems.objects.filter(customer_id=customer_id).select_related('product')
     return [(item.product.name, item.product.price, item.quantity) for item in cart_items]
 
 def clear_cart(customer_id: int):
-    CartItem.objects.filter(customer_id=customer_id).delete()
+    CartItems.objects.filter(customer_id=customer_id).delete()
     return "Cart cleared."
 
 def num_of_item_in_cart(customer_id: int, product_id: int):
@@ -28,13 +28,13 @@ def num_of_item_in_cart(customer_id: int, product_id: int):
     Retrieve the number of a specific item in a customer's cart.
     """
     try:
-        cart_item = CartItem.objects.get(customer_id=customer_id, product_id=product_id)
+        cart_item = CartItems.objects.get(customer_id=customer_id, product_id=product_id)
         return cart_item.quantity
-    except CartItem.DoesNotExist:
+    except CartItems.DoesNotExist:
         return 0
 
 def update_cart(customer_id: int, product_id: int, quantity: int):
-    CartItem.objects.filter(
+    CartItems.objects.filter(
         customer_id=customer_id, 
         product_id=product_id
     ).update(quantity=quantity)
@@ -42,7 +42,7 @@ def update_cart(customer_id: int, product_id: int, quantity: int):
 
 def remove_from_cart(customer_id: int, product_id: int, quantity: int = None):
     try:
-        cart_item = CartItem.objects.get(customer_id=customer_id, product_id=product_id)
+        cart_item = CartItems.objects.get(customer_id=customer_id, product_id=product_id)
         if quantity is None or quantity >= cart_item.quantity:
             cart_item.delete()
             return f"Removed all of product {product_id} from cart."
@@ -50,14 +50,14 @@ def remove_from_cart(customer_id: int, product_id: int, quantity: int = None):
             cart_item.quantity -= quantity
             cart_item.save()
             return f"Removed {quantity} of product {product_id} from cart."
-    except CartItem.DoesNotExist:
+    except CartItems.DoesNotExist:
         return "Item not found in cart."
 
 def search_items_in_cart(customer_id: int, name: str = None, category: str = None, type: str = None):
     '''
     Search for items in the cart using Django ORM.
     '''
-    query = CartItem.objects.filter(customer_id=customer_id).select_related('product')
+    query = CartItems.objects.filter(customer_id=customer_id).select_related('product')
     
     if name:
         query = query.filter(product__name__icontains=name)

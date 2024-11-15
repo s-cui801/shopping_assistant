@@ -1,10 +1,10 @@
 from langchain.agents import tool
 import sqlite3
 from datetime import datetime
-from shopping_assistant.models import Order
+from shopping_assistant.models import Orders
 
 def create_order(cart_id: int, total_amount: float):
-    order = Order.objects.create(
+    order = Orders.objects.create(
         cart_id=cart_id,
         order_status="Pending",
         payment_status="Unpaid",
