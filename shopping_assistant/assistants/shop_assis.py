@@ -186,15 +186,15 @@ from ..assistants.assistant_routing import shopping_assistant_graph
 
 def stream_user_queries(shopping_assistant_graph, config, question):
     _printed = set()
-    message_list = []
+    message_str = ""
 
     events = shopping_assistant_graph.stream(
     {"messages": ("user", question)}, config, stream_mode="values"
     )
     for event in events:
         # _store_event(event, message_list, _printed)
-        _store_ai_messages(event, message_list, _printed)
-    return message_list
+        message_str += _store_ai_messages(event, _printed)
+    return message_str
     # snapshot = shopping_assistant_graph.get_state(config)
     # while snapshot.next:
     # # We have an interrupt! The agent is trying to use a tool, and the user can approve or deny it

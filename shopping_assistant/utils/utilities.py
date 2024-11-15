@@ -66,7 +66,7 @@ def _store_event(event: dict, stored_messages: list, _printed: set, max_length=1
             stored_messages.append(msg_repr)
             _printed.add(message.id)
 
-def _store_ai_messages(event: dict, stored_messages: list, _printed: set, max_length=1500):
+def _store_ai_messages(event: dict, _printed: set, max_length=1500):
     """
     Store only AI messages in a list.
     
@@ -80,6 +80,7 @@ def _store_ai_messages(event: dict, stored_messages: list, _printed: set, max_le
         list: Updated stored_messages list
     """
     message = event.get("messages")
+    stored_messages = ""
     if message:
         if isinstance(message, list):
             message = message[-1]
@@ -91,7 +92,7 @@ def _store_ai_messages(event: dict, stored_messages: list, _printed: set, max_le
                 msg_repr = message.content
                 if len(msg_repr) > max_length:
                     msg_repr = msg_repr[:max_length] + " ... (truncated)"
-                stored_messages.append(msg_repr)
+                stored_messages += msg_repr + "\n"
                 _printed.add(message.id)
     
     return stored_messages

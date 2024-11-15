@@ -3,7 +3,7 @@ from langchain_community.tools import TavilySearchResults
 
 from ..utils.products_tool import search_product_tool, search_products_recommendations_tool, get_product_by_product_id_tool
 from ..utils.cart_tool import fetch_cart_tool, add_to_cart_tool, clear_cart_tool, remove_from_cart_tool
-from ..utils.order_tool import create_order_tool
+from ..utils.order_tool import search_order_by_customer_id_tool, search_order_info_by_order_id_tool, payment_query_tool, policy_query_tool, delivery_query_tool, order_query_tool, checkout_query_tool
 from ..utils.customer_tool import fetch_customer_information_tool
 
 from langgraph.checkpoint.memory import MemorySaver
@@ -23,6 +23,13 @@ safe_tools = [
     get_product_by_product_id_tool,
     fetch_cart_tool,
     fetch_customer_information_tool,
+    search_order_by_customer_id_tool,
+    search_order_info_by_order_id_tool,
+    payment_query_tool, 
+    policy_query_tool, 
+    delivery_query_tool, 
+    order_query_tool, 
+    checkout_query_tool,
     # check_discount_tool,
 ]
 
@@ -30,7 +37,7 @@ sensitive_tools = [
 add_to_cart_tool,
 clear_cart_tool,
 remove_from_cart_tool,
-create_order_tool,
+
 ]
 sensitive_tool_names = {t.name for t in sensitive_tools}
 

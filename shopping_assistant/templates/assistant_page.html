@@ -12,13 +12,20 @@
 <body>
     <div>
         <h1>Welcome to the Shopping Assistant!</h1>
-        {% if customer_id %}
+        <!-- {% if customer_id %}
             <p>Your customer ID is: {{ customer_id }}</p>
         {% else %}
             <p>No customer ID provided.</p>
-        {% endif %}
+        {% endif %} -->
         
         <!-- Conversation History -->
+
+        <!-- Logout Button -->
+        <form action="{% url 'logout' %}" method="POST">
+            {% csrf_token %}
+            <button type="submit">Logout</button>
+        </form>
+
         <div id="chat">
             {% for message in conversation %}
                 <div class="{{ message.role }}">
@@ -33,11 +40,7 @@
             <button type="submit">Send</button>
         </form>
         
-        <!-- Logout Button -->
-        <form action="{% url 'logout' %}" method="POST">
-            {% csrf_token %}
-            <button type="submit">Logout</button>
-        </form>
+        
     </div>
 
     <script>

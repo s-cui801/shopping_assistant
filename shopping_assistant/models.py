@@ -85,7 +85,7 @@ class OrderItems(models.Model):
         on_delete=models.CASCADE,
         db_column='product_id', 
         to_field='product_id'
-        )
+    )
     quantity = models.IntegerField()
 
     class Meta:

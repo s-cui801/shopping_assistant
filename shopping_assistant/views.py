@@ -134,15 +134,15 @@ def assistant_view(request):
             
             # Get the assistant's response (implement this logic based on your AI assistant model)
             # assistant_response = process_user_message(user_message, customer_id)
-            assistant_response_list = stream_user_queries(shopping_assistant_graph, request.session['config'], user_message)
+            assistant_response_str = stream_user_queries(shopping_assistant_graph, request.session['config'], user_message)
 
             snapshot = shopping_assistant_graph.get_state(request.session['config'])
             if snapshot.next:
                 request.session['need_confirmation'] = True
-                assistant_response_list.append('Do you confirm the action? Type "y" to continue.')
+                assistant_response_str += '\n' + ('Do you confirm the action? Type "y" to continue.')
             
                 # Append assistant's response to the conversation history
-            request.session['conversation'].append({'role': 'assistant', 'content': assistant_response_list})
+            request.session['conversation'].append({'role': 'assistant', 'content': assistant_response_str})
 
             request.session.modified = True
 
@@ -155,7 +155,7 @@ def assistant_view(request):
                     None,
                     config,
                 )
-                assistant_response = "Action confirmed and executed successfully."
+                assistant_response = "Action confirmed and executed successfully. What else can I help you with?"
                 request.session['conversation'].append({'role': 'assistant', 'content': [assistant_response]})
                 request.session['need_confirmation'] = False
             else:
