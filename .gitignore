@@ -34,7 +34,7 @@ tools/__pycache__/
 venv/
 
 # Ignore database files
-shopping_assistant.db
+# shopping_assistant.db
 setup_db.py
 
 # Ignore test files
@@ -50,4 +50,4 @@ test.ipynb
 /db/*
 
 # Static files
-/static/
+# /static/

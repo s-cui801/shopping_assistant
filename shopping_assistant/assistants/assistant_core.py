@@ -9,6 +9,10 @@ from langchain_core.runnables import Runnable, RunnableConfig
 
 from langchain_openai import ChatOpenAI
 
+# This is the core part of the shopping assistant.
+# It defines the State class, Assistant class, and the LLM model used for the assistant.
+
+
 class State(TypedDict):
     messages: Annotated[list[AnyMessage], add_messages]
     customer_id: str
@@ -37,4 +41,4 @@ class Assistant:
         return {"messages": result}
 
 
-llm = ChatOpenAI(model="gpt-4-turbo-preview")
+llm = ChatOpenAI(model="gpt-4o-mini")

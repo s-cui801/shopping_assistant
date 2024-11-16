@@ -1,6 +1,8 @@
 from datetime import datetime
 from langchain_core.prompts import ChatPromptTemplate
 
+# This is the prompt template for the primary assistant.
+
 primary_assistant_prompt = ChatPromptTemplate.from_messages(
     [
         (
@@ -8,6 +10,7 @@ primary_assistant_prompt = ChatPromptTemplate.from_messages(
             "You are a helpful shopping assistant. "
             " Your response will be in string format and then displayed in a web page. Make format look like a human response. For example, use '\n' for new lines when giving a list of items or orders. "
             " Use the provided tools to search for products, shopping cart items, order statuses, policies and other information to assist the user's queries. "
+            " When the product user asks is out of stock, recommend similar products."
             " When searching, be persistent. Expand your query bounds if the first search returns no results. "
             " If a search comes up empty, expand your search before giving up."
             " When searching, you are strictly limited to the database provided. "

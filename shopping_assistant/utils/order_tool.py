@@ -3,15 +3,6 @@ import sqlite3
 from datetime import datetime
 from shopping_assistant.models import Orders, OrderItems, Products
 
-# def create_order(cart_id: int, total_amount: float):
-#     order = Orders.objects.create(
-#         cart_id=cart_id,
-#         order_status="Pending",
-#         payment_status="Unpaid",
-#         order_date=datetime.now()
-#     )
-#     return "Order created successfully."
-
 def search_order_by_customer_id(customer_id: int):
     orders = Orders.objects.filter(customer_id=customer_id)
     return [
@@ -35,13 +26,6 @@ def search_order_by_customer_id_tool(customer_id: int):
     Tool to search orders by customer id. Help user track their orders.
     """
     return search_order_by_customer_id(customer_id)
-
-# @tool
-# def create_order_tool(customer_id: int, total_amount: float):
-#     """
-#     Tool to create a new order.
-#     """
-#     return create_order(customer_id, total_amount)
 
 @tool
 def search_order_info_by_order_id_tool(order_id: int):
